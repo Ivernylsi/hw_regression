@@ -56,8 +56,8 @@ data = pr.normalize_data(data, donttouch)
 
 lr = pr.LinearRegression(size, True)
 
-lr.solve_QR(data)
-datalist = separate_list(data)
+#lr.solve_QR(data)
+datalist = separate_list(data, 10)
 batch, table = run(datalist, lr)
 
 table_rows = [["R2_train", "R2_test", "RMSE_train", "RMSE_test"]] + table;

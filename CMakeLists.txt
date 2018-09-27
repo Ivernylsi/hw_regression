@@ -13,7 +13,7 @@ add_library(regression
   LinearRegression.cpp
   )
 
-target_link_libraries(regression Eigen3::Eigen tbb)
+target_link_libraries(regression Eigen3::Eigen )
 
 pybind11_add_module(PyRegression
                     PyRegression.cpp
