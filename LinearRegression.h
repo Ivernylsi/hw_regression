@@ -11,11 +11,7 @@ public:
   LinearRegression(const int &featureSize, const bool &freeTerm = false) : freeTerm(freeTerm), featureSize(featureSize) {
   if(freeTerm) this->featureSize ++;
     weight = Eigen::VectorXd(size());
-  std::normal_distribution<double> runif(-100, 100);
-  std::mt19937 rng;
-
-  for(int i = 0; i < weight.rows(); ++i) 
-    weight[i] = runif(rng);
+    weight.setZero();
     
   }
 

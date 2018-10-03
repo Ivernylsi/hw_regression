@@ -26,7 +26,7 @@ def read_csv(filename, hot_encoding = [(35, 72), (39, 24)]):
         next(lines)
         for line in lines:
             arr = np.array(line, dtype=float)
-            arr = perform_hot(arr, hot_encoding)
+#            arr = perform_hot(arr, hot_encoding)
             size = len(arr) - 1
             d = pr.Data(arr[:1], arr[:-1])
             max_x = max(max_x, d.y)
@@ -55,7 +55,7 @@ def run(datalist, lr, stoch = True):
         if stoch :
              lr.train_stochastic(data, learn_rate = 0.001, max_iter = 5000)
         else:
-            lr.train(data, learn_rate = 0.01, max_iter = 3000)
+            lr.train(data, learn_rate = 0.01, max_iter = 500)
         rmse_test, r2_test = lr.calc_RMSE(datalist[i]), lr.calc_R2(datalist[i])
         rmse_train, r2_train = lr.calc_RMSE(data), lr.calc_R2(data)
 
@@ -69,26 +69,29 @@ def run(datalist, lr, stoch = True):
 
 data, size = read_csv('dataset.csv')
 donttouch = [ size - 1 - i  for i in range(12)]
-donttouch = donttouch + [size -1 for i in range(35, 35+72,1)]
-donttouch = donttouch + [size -1 for i in range(39, 39+24,1)]
+#donttouch = donttouch + [size -1 for i in range(35, 35+72,1)]
+#donttouch = donttouch + [size -1 for i in range(39, 39+24,1)]
 data = pr.normalize_data(data, donttouch)
 
 lr = pr.LinearRegression(size, True)
 #lr.solve_QR(data)
-datalist = separate_list(data, 5)
+datalist = separate_list(data, 8)
 batch, table = run(datalist, lr, False)
 
 batch = batch + ['Mean', 'STD']
 mean = [0]*(len(table[0]))
 for i in range(len(table)):
     for j in range(len(table[i])):
-        mean[j] += table[i][j]
+        mean[j] += table[i][j] / len(table)
 
 table = table + [mean]
 std = [0]*len(mean)
 for i in range(len(table)-1):
     for j in range(len(table[i])):
-        std[j] += (table[i][j] - mean[j]) / len(table[i]) 
+        std[j] += (table[i][j] - mean[j])**2 / len(table) 
+
+std = np.sqrt(std)
+
 table = table + [std] 
 
 

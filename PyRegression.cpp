@@ -30,7 +30,7 @@ void normalizeData(DataSet &data, const std::vector<int> &bools) {
   for (auto &d : data)
     for (int i = 0; i < d.x.rows(); ++i)
       if (!(std::find(bools.begin(), bools.end(), i) != bools.end()))
-        STD(i) += (d.x(i) - means(i)) * (d.x(i) - means(i)) / (N - 1);
+        STD(i) += (d.x(i) - means(i)) * (d.x(i) - means(i)) / (N);
 
   for (int i = 0; i < STD.rows(); ++i)
     STD(i) = sqrt(STD(i));
