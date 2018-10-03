@@ -2,11 +2,12 @@
 
 double LinearRegression::calcR2(const DataSet &set) {
   double SStot = 0, SSres = 0;
+  long double mean = 0;
+  for (Data data: set) mean += data.y / set.size();
   for (Data data : set) {
-    double mean = data.x.mean();
     double y_ = predict(data);
-    SStot += (data.y - mean) * (data.y - mean);// / set.size();
-    SSres += (data.y - y_) * (data.y - y_);// / set.size();
+    SStot += (data.y - mean) * (data.y - mean);
+    SSres += (data.y - y_) * (data.y - y_);
   }
 
   std::cout<<"SStot = " << SStot << " SSres = "<< SSres <<std::endl;
