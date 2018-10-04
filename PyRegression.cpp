@@ -55,13 +55,11 @@ PYBIND11_MODULE(PyRegression, m) {
   py::class_<LinearRegression>(m, "LinearRegression")
       .def(py::init<const int &, const bool &>())
       .def("train", &LinearRegression::train, "data"_a, "learn_rate"_a = 0.00001, "max_iter"_a = 10000)
-      .def("train_stochastic", &LinearRegression::trainStochastic, "data"_a, "num"_a = 10, "learn_rate"_a = 0.00001, "max_iter"_a = 10000)
       .def("calc_R2", &LinearRegression::calcR2)
       .def("predict", &LinearRegression::predict)
       .def("calc_RMSE", &LinearRegression::calcRMSE)
       .def("getWeight", &LinearRegression::getWeight)
       .def("solve_QR", &LinearRegression::solveQR)
-      .def("solve_SVD", &LinearRegression::solveQR)
      .def("__repr__", [](const LinearRegression &l) {
         std::string s = "<class LinearRegression ";
         s = s + " wieghts =\n" + EigentoString(l.weight.transpose());

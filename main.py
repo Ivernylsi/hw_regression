@@ -15,17 +15,21 @@ def read_csv(filename):
     data = []
     size = 0
     max_x = 0
+    names = []
     with open(filename, newline='') as csvfile:
         lines = csv.reader(csvfile)
+        for line in lines:
+            names = line[1:][:-1]
+            break
         next(lines)
         for line in lines:
             arr = np.array(line, dtype=float)
-            size = len(arr) - 1
-            d = pr.Data(arr[:1], arr[:-1])
+            size = len(arr) - 1 -1
+            d = pr.Data(arr[:1], arr[:-1][1:])
             max_x = max(max_x, d.y)
             data.append(d)
     print("Max_Y", max_x)
-    return data, size
+    return data, size, names
 
 def separate_list(data, parts = 5):
     random.shuffle(data)
@@ -36,7 +40,8 @@ def separate_list(data, parts = 5):
 
     return datalist
 
-def run(datalist, lr, stoch = True):
+def run(datalist, size):
+
     table_content = []
     batch_content = []
     for i in range(len(datalist)):
@@ -44,31 +49,29 @@ def run(datalist, lr, stoch = True):
         for j in range(len(datalist)):
             if i == j: continue
             data = data + datalist[j]
+        lr = pr.LinearRegression(size, False)
 
-        if stoch :
-             lr.train_stochastic(data, learn_rate = 0.001, max_iter = 5000)
-        else:
-            lr.train(data, learn_rate = 0.01, max_iter = 1000)
+        lr.train(data, learn_rate = 0.001, max_iter = 5000)
         rmse_test, r2_test = lr.calc_RMSE(datalist[i]), lr.calc_R2(datalist[i])
         rmse_train, r2_train = lr.calc_RMSE(data), lr.calc_R2(data)
 
         print(rmse_test, r2_test)
         batch_content.append("T" + str(i))
-        table_content.append([r2_train, r2_test, rmse_train, rmse_test])
+        table_content.append(np.append([r2_train, r2_test, rmse_train, rmse_test], lr.getWeight()))
 
     return batch_content, table_content
 
 
 
-data, size = read_csv('dataset.csv')
+file1 = 'dataset.csv'
+file2 = 'Dataset/Training/Features_Variant_1.csv'
+data, size, names = read_csv(file1)
+print(names, len(names))
 donttouch = [ size - 1 - i  for i in range(12)]
 data = pr.normalize_data(data, donttouch)
 
-lr = pr.LinearRegression(size, False)
-#lr.solve_QR(data)
-datalist = separate_list(data, 8)
-batch, table = run(datalist, lr, False)
-
+datalist = separate_list(data, 5)
+batch, table = run(datalist, size)
 batch = batch + ['Mean', 'STD']
 mean = [0]*(len(table[0]))
 for i in range(len(table)):
@@ -86,7 +89,7 @@ std = np.sqrt(std)
 table = table + [std] 
 
 
-table_rows = [["R2_train", "R2_test", "RMSE_train", "RMSE_test"]] + table;
+table_rows = [["R2_train", "R2_test", "RMSE_train", "RMSE_test"] + names] + table;
 
 trace = plotly.graph_objs.Table( header = dict(values = (['metric'] + batch)),
                   cells=dict(values = table_rows))
@@ -94,8 +97,4 @@ trace = plotly.graph_objs.Table( header = dict(values = (['metric'] + batch)),
 plotly.offline.plot([trace], filename = 'basic_table')
 
 print(lr)
-for i in range(20):
-    ind = random.randint(0, len(data)-1)
-    print(lr.predict(data[ind]) - data[ind].y)
-
 

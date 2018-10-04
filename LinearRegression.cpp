@@ -47,7 +47,26 @@ void LinearRegression::train(DataSet &set,
       double gradientCommonPart = 2 * (x.dot(w) - d.y);
       gradient += x * gradientCommonPart / data.size();
     }
-    return gradient;
+    return gradient.normalized();
+  };
+
+  auto one_dim_gradient = [](bool freeTerm, const DataSet &data, 
+                             const Eigen::VectorXd &w, 
+                             const Eigen::VectorXd &g,
+                             double lambda) {
+    // f(X) = \sum ( x * (w - l*g) - y)^2
+    // df(X)/dl = 2 \ sum * sum(x*g) * (x*(w-l*g) - y)
+    Eigen::VectorXd curr_G = w - lambda*g;
+    double ans = 0;
+    for (const auto &d : data) {
+      Eigen::VectorXd x = freeTerm ? d.x.homogeneous() : d.x;
+      double common = x.dot(w) - x.dot(lambda*g) - d.y;
+      if(!std::isfinite(common)) return 0.0;
+      ans +=  -x.dot(g) * common / data.size(); 
+    }
+    if(!std::isfinite(ans)) return 0.0;
+    return ans;
+
   };
 
   auto costLambda = [](bool freeTerm, const DataSet &set, Eigen::VectorXd &w) {
@@ -63,62 +82,18 @@ void LinearRegression::train(DataSet &set,
   auto gradient =
       std::bind(lambda, freeTerm, std::placeholders::_1, std::placeholders::_2);
 
-  auto cost = std::bind(costLambda, freeTerm, std::placeholders::_1,
-                        std::placeholders::_2);
+  auto gradient_1dim = 
+    std::bind(one_dim_gradient, freeTerm, std::placeholders::_1, std::placeholders::_2,
+              std::placeholders::_3, std::placeholders::_4);
 
-  GradientDescent<DataSet, typeof(gradient), typeof(cost)>::evaluate(
-      set, weight, std::move(gradient), std::move(cost), mxIter, learn_rate);
-}
-void LinearRegression::trainStochastic(DataSet &set,
-                             const int &num,
-                             const double &learn_rate,
-                             const int &mxIter) {
-
-  // f(w) = \sum (x.w + b - y)^2
-  // df/dw_i = 2* sum y[i] * (x.w - y)
-  //                       gradientCommonPart
-  // df/db = 2 * sum (x.w + b - y) - homogeneous part
-  auto lambda = [](bool freeTerm, int num, const DataSet &data,
-                   const Eigen::VectorXd &w) {
-  std::vector<int> v;
-  srand(time(0));
-  for(int i =0; i < num; ++i) {
-    int newI = rand() % data.size();
-    if(!(std::find(v.begin(), v.end(), newI) != v.end()))
-      v.push_back(newI);
-    else i-=1;
-  }
-
-    Eigen::VectorXd gradient(w.rows());
-    gradient.setZero();
-    for(int i : v) {
-      const Data &d = data[i];
-      Eigen::VectorXd x = freeTerm ? d.x.homogeneous() : d.x;
-      double gradientCommonPart = 2 * (x.dot(w) - d.y);
-      gradient += x * gradientCommonPart / v.size();
-    }
-    return gradient;
-  };
-
-  auto costLambda = [](bool freeTerm, const DataSet &set, Eigen::VectorXd &w) {
-    double cost = 0;
-    for (const auto &s : set) {
-      Eigen::VectorXd x = freeTerm ? s.x.homogeneous() : s.x;
-      double part = x.dot(w) - s.y;
-      cost += (part * part) / set.size();
-    }
-    return cost;
-  };
-
-  auto gradient =
-      std::bind(lambda, freeTerm, num, std::placeholders::_1, std::placeholders::_2);
 
   auto cost = std::bind(costLambda, freeTerm, std::placeholders::_1,
                         std::placeholders::_2);
 
-  GradientDescent<DataSet, typeof(gradient), typeof(cost)>::evaluate(
-      set, weight, std::move(gradient), std::move(cost), mxIter, learn_rate);
+  GradientDescent<DataSet, typeof(gradient), typeof(cost), typeof(gradient_1dim)>::evaluate(
+      set, weight, std::move(gradient), std::move(cost), std::move(gradient_1dim),  mxIter, learn_rate);
 }
+
 void LinearRegression::solveQR(DataSet &set) {
   Eigen::Matrix<double, -1, -1> data(set.size(), size());
   Eigen::VectorXd b(set.size());
@@ -133,16 +108,3 @@ void LinearRegression::solveQR(DataSet &set) {
   weight = data.colPivHouseholderQr().solve(b);
 }
 
-void LinearRegression::solveSVD(DataSet &set) {
-  Eigen::Matrix<double, -1, -1> data(set.size(), size());
-  Eigen::VectorXd b(set.size());
-  for (size_t i = 0; i < set.size(); ++i) {
-    Eigen::VectorXd x = set[i].x;
-    if (freeTerm)
-      x = x.homogeneous();
-    data.row(i) = x.transpose();
-    b(i) = set[i].y;
-  }
-
-  weight = data.jacobiSvd().solve(b);
-}
