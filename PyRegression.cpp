@@ -11,7 +11,6 @@ static std::string EigentoString(const Eigen::MatrixXd &mat) {
   ss << mat;
   return ss.str();
 }
-
 void normalizeData(DataSet &data, const std::vector<int> &bools) {
   Eigen::VectorXd means(data[0].x.rows());
   means.setZero();
@@ -21,10 +20,10 @@ void normalizeData(DataSet &data, const std::vector<int> &bools) {
 
   // for loop for means
   for (auto &d : data)
-    for (int i = 0; i < d.x.rows(); ++i)
+    for (int i = 0; i < d.x.rows(); ++i) {
       if (!(std::find(bools.begin(), bools.end(), i) != bools.end()))
-
         means[i] += d.x(i) / N;
+    }
 
   // for loop for std
   for (auto &d : data)
@@ -32,8 +31,8 @@ void normalizeData(DataSet &data, const std::vector<int> &bools) {
       if (!(std::find(bools.begin(), bools.end(), i) != bools.end()))
         STD(i) += (d.x(i) - means(i)) * (d.x(i) - means(i)) / (N);
 
-  for (int i = 0; i < STD.rows(); ++i)
-    STD(i) = sqrt(STD(i));
+//  for (int i = 0; i < STD.rows(); ++i)
+//    STD(i) = sqrt(STD(i));
 
   for (auto &d : data)
     for (int i = 0; i < d.x.rows(); ++i)

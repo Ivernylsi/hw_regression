@@ -21,11 +21,12 @@ def read_csv(filename):
         for line in lines:
             names = line[1:][:-1]
             break
-        next(lines)
         for line in lines:
-            arr = np.array(line, dtype=float)
-            size = len(arr) - 1 -1
-            d = pr.Data(arr[:1], arr[:-1][1:])
+            arr = np.array(line, dtype=float)[1:]
+            y = arr[:-1]
+            y = np.append(y, [1])
+            size = len(y) 
+            d = pr.Data(arr[-1:], y)
             max_x = max(max_x, d.y)
             data.append(d)
     print("Max_Y", max_x)
@@ -50,12 +51,12 @@ def run(datalist, size):
             if i == j: continue
             data = data + datalist[j]
         lr = pr.LinearRegression(size, False)
-
-        lr.train(data, learn_rate = 0.001, max_iter = 5000)
+        lr.train(data, learn_rate = 0.05, max_iter = 5000)
         rmse_test, r2_test = lr.calc_RMSE(datalist[i]), lr.calc_R2(datalist[i])
         rmse_train, r2_train = lr.calc_RMSE(data), lr.calc_R2(data)
 
         print(rmse_test, r2_test)
+        print(lr)
         batch_content.append("T" + str(i))
         table_content.append(np.append([r2_train, r2_test, rmse_train, rmse_test], lr.getWeight()))
 
@@ -68,6 +69,7 @@ file2 = 'Dataset/Training/Features_Variant_1.csv'
 data, size, names = read_csv(file1)
 print(names, len(names))
 donttouch = [ size - 1 - i  for i in range(12)]
+donttouh = []
 data = pr.normalize_data(data, donttouch)
 
 datalist = separate_list(data, 5)

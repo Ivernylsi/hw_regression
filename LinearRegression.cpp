@@ -43,30 +43,13 @@ void LinearRegression::train(DataSet &set,
     Eigen::VectorXd gradient(w.rows());
     gradient.setZero();
     for (const auto &d : data) {
-      Eigen::VectorXd x = freeTerm ? d.x.homogeneous() : d.x;
+      Eigen::VectorXd x;
+      if(freeTerm) x =  d.x.homogeneous() ;
+      else x =  d.x;
       double gradientCommonPart = 2 * (x.dot(w) - d.y);
       gradient += x * gradientCommonPart / data.size();
     }
     return gradient.normalized();
-  };
-
-  auto one_dim_gradient = [](bool freeTerm, const DataSet &data, 
-                             const Eigen::VectorXd &w, 
-                             const Eigen::VectorXd &g,
-                             double lambda) {
-    // f(X) = \sum ( x * (w - l*g) - y)^2
-    // df(X)/dl = 2 \ sum * sum(x*g) * (x*(w-l*g) - y)
-    Eigen::VectorXd curr_G = w - lambda*g;
-    double ans = 0;
-    for (const auto &d : data) {
-      Eigen::VectorXd x = freeTerm ? d.x.homogeneous() : d.x;
-      double common = x.dot(w) - x.dot(lambda*g) - d.y;
-      if(!std::isfinite(common)) return 0.0;
-      ans +=  -x.dot(g) * common / data.size(); 
-    }
-    if(!std::isfinite(ans)) return 0.0;
-    return ans;
-
   };
 
   auto costLambda = [](bool freeTerm, const DataSet &set, Eigen::VectorXd &w) {
@@ -81,17 +64,11 @@ void LinearRegression::train(DataSet &set,
 
   auto gradient =
       std::bind(lambda, freeTerm, std::placeholders::_1, std::placeholders::_2);
-
-  auto gradient_1dim = 
-    std::bind(one_dim_gradient, freeTerm, std::placeholders::_1, std::placeholders::_2,
-              std::placeholders::_3, std::placeholders::_4);
-
-
   auto cost = std::bind(costLambda, freeTerm, std::placeholders::_1,
                         std::placeholders::_2);
 
-  GradientDescent<DataSet, typeof(gradient), typeof(cost), typeof(gradient_1dim)>::evaluate(
-      set, weight, std::move(gradient), std::move(cost), std::move(gradient_1dim),  mxIter, learn_rate);
+  weight = GradientDescent<DataSet, typeof(gradient), typeof(cost)>::evaluate(
+      set, weight, std::move(gradient), std::move(cost),  mxIter, learn_rate);
 }
 
 void LinearRegression::solveQR(DataSet &set) {

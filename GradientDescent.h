@@ -4,16 +4,16 @@
 #include <Eigen/Eigen>
 #include <iostream>
 
-template <typename DataType, typename GradientLambda, typename CostLambda,
-          typename Gradient_1Dim>
+template <typename DataType, typename GradientLambda, typename CostLambda>
 class GradientDescent {
 public:
-  static void evaluate(const DataType &data, Eigen::VectorXd &weights,
-                       GradientLambda &&f, CostLambda &&c, Gradient_1Dim &&g1,
+  static auto evaluate(const DataType &data, const Eigen::VectorXd &w_,
+                       GradientLambda &&f, CostLambda &&c,
                        int max_iter = 10000, double learn_rate = 0.0001) {
 
+    Eigen::VectorXd weights = w_;
     double cost_change = 100;
-    for (int i = 0; i < max_iter; ++i) {
+    for (int i = 0; i < max_iter ; ++i) {
       double prev_cost = c(data, weights);
       std::string out = "iter " + std::to_string(i);
       std::cout << '\r' << out;
@@ -21,15 +21,8 @@ public:
       Eigen::VectorXd gradient = f(data, weights);
 
       double step = learn_rate;
-      
-      for(int i = 0; i < 100; ++i) {
-          step = step -  0.1 * g1(data, weights, gradient, step);
-          Eigen::VectorXd newY = (weights - step * gradient);
-          double cost = c(data, newY);
-          if(cost - prev_cost < learn_rate) break;
-      }      
-      
-      weights += -gradient * step;
+     
+      weights -= gradient * step;
 
       double cost = c(data, weights);
       cost_change = prev_cost - cost;
@@ -37,6 +30,7 @@ public:
                 << "                  ";
     }
     std::cout<<std::endl;
+    return weights;
   }
 };
 
