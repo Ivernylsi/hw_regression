@@ -24,7 +24,7 @@ def read_csv(filename):
         for line in lines:
             arr = np.array(line, dtype=float)[1:]
             y = arr[:-1]
-            y = np.append(y, [1])
+#            y = np.append(y, [1])
             size = len(y) 
             d = pr.Data(arr[-1:], y)
             max_x = max(max_x, d.y)

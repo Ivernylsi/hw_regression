@@ -21,22 +21,22 @@ void normalizeData(DataSet &data, const std::vector<int> &bools) {
   // for loop for means
   for (auto &d : data)
     for (int i = 0; i < d.x.rows(); ++i) {
-      if (!(std::find(bools.begin(), bools.end(), i) != bools.end()))
+      if ((std::find(bools.begin(), bools.end(), i) == bools.end()))
         means[i] += d.x(i) / N;
     }
 
   // for loop for std
   for (auto &d : data)
     for (int i = 0; i < d.x.rows(); ++i)
-      if (!(std::find(bools.begin(), bools.end(), i) != bools.end()))
-        STD(i) += (d.x(i) - means(i)) * (d.x(i) - means(i)) / (N);
+      if ((std::find(bools.begin(), bools.end(), i) == bools.end()))
+        STD(i) += (d.x(i) - means(i)) * (d.x(i) - means(i)) / N;
 
-//  for (int i = 0; i < STD.rows(); ++i)
-//    STD(i) = sqrt(STD(i));
+  for (int i = 0; i < STD.rows(); ++i)
+    STD(i) = sqrt(STD(i));
 
   for (auto &d : data)
     for (int i = 0; i < d.x.rows(); ++i)
-      if (!(std::find(bools.begin(), bools.end(), i) != bools.end())) {
+      if ((std::find(bools.begin(), bools.end(), i) == bools.end())) {
         d.x(i) = d.x(i) - means(i);
         double denominator = STD(i) == 0 ? 1 : STD(i);
         d.x(i) /= denominator;
